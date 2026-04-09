@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PostController;
+use App\Http\Middleware\EnsureTokenIsValid;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,49 +16,15 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('register',function(Request $request){
+Route::post('register',[AuthController::class,'register']);
 
-    // 1. Validate
-    $request->validate([
-        'name' => 'required|string',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:6'
-    ]);
+Route::post('login',[AuthController::class,'login']);
 
-    // 2. password
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password)
-    ]);
+Route::post('logout',[AuthController::class,'logout'])->middleware('auth:sanctum');
 
-    return response()->json([
-        'status' => 'success',
-        'msesage' => 'Registered successfully',
-        'user' => $user
-    ]);
-});
+// post
 
-Route::post('login', function(Request $request){
-
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
-    ]);
-
-    if(!Auth::attempt($request->only('email','password'))) {
-        return response()->json([
-            'status' => 'failed',
-            'message' => 'Email or password invalid'
-        ],401);
-    }
-
-    $token = Auth::user()->createToken('laravel-blog-api')->plainTextToken;
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Loggin successfully',
-        'user' => Auth::user(),
-        'token' => $token
-    ]);
-});
+Route::get('posts',[PostController::class,'index']);
+Route::post('posts',[PostController::class,'store']);
+Route::post('posts/{id}',[PostController::class,'update']);
+Route::delete('posts/{id}',[PostController::class,'destroy']);
